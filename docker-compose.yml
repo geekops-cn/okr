@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # MySQL数据库服务
+  db:
+    image: mysql:8.0
+    container_name: okr_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 123.com
+      MYSQL_DATABASE: okr_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - okr_network
+
+  # 后端服务
+  backend:
+    build: ./backend
+    container_name: okr_backend
+    restart: unless-stopped
+    environment:
+      - PORT=3001
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=123.com
+      - DB_NAME=okr_db
+      - DB_PORT=3306
+      - JWT_SECRET=your_jwt_secret_key
+      - NODE_ENV=production
+    ports:
+      - "3001:3001"
+    depends_on:
+      - db
+    networks:
+      - okr_network
+
+  # 前端服务
+  frontend:
+    build: ./frontend
+    container_name: okr_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - okr_network
+
+# 网络配置
+networks:
+  okr_network:
+    driver: bridge
+
+# 数据卷配置
+volumes:
+  mysql_data:
+    driver: local
